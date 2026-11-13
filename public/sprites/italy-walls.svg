@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="240" viewBox="0 0 512 240">
+  <defs>
+    <pattern id="roof" width="32" height="12" patternUnits="userSpaceOnUse"><rect width="32" height="12" fill="#a5583c"/><path d="M0 0h32M0 11h32M8 0v5m16-5v5M0 6v5m16-5v5m16-5v5" fill="none" stroke="#743e30" stroke-width="2"/></pattern>
+    <g id="window"><rect width="58" height="92" fill="#775a46"/><rect x="5" y="5" width="48" height="82" fill="#a9b5b2"/><path d="M29 5v82M5 43h48" stroke="#61574d" stroke-width="4"/><path d="M-11 0h10v92h-10m70-92h10v92H59" fill="#5f6a58" stroke="#444f45" stroke-width="2"/><path d="M-9 12h6m-6 12h6m-6 12h6m-6 12h6m-6 12h6m-6 12h6M61 12h6m-6 12h6m-6 12h6m-6 12h6m-6 12h6m-6 12h6" stroke="#a2ad8b" stroke-width="2"/><path d="M-14 92h86v7h-86z" fill="#8a6c50"/></g>
+  </defs>
+  <rect width="512" height="240" fill="#dfc49c"/><path d="M0 70h512v55H0z" fill="#d2b38b"/><path d="M0 125h512v45H0z" fill="#c6a47b"/><path d="M0 170h512v70H0z" fill="#b89167"/>
+  <rect width="512" height="24" fill="url(#roof)"/><path d="M0 24h512v10H0zM0 36h512v4H0z" fill="#795640"/>
+  <path d="M0 213h512v27H0z" fill="#a68a70"/><path d="M0 218h512M0 229h512" stroke="#786c5c" stroke-width="2"/>
+  <use href="#window" x="48" y="65"/><use href="#window" x="202" y="65"/><use href="#window" x="356" y="65"/>
+  <path d="M454 212v-48a21 21 0 0 1 42 0v48" fill="#5d5148" stroke="#d7bb91" stroke-width="6"/><path d="M460 212v-47a15 15 0 0 1 30 0v47" fill="#3c3a36"/>
+  <path d="M137 40v171m155-171v171M0 40h512" stroke="#a7815c" stroke-width="3" opacity=".55"/>
+</svg>

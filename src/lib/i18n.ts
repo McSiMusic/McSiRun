@@ -1,0 +1,66 @@
+import { useAppSelector } from "@/src/store/hooks";
+
+const en = {
+  home: "McSiRun home", howTo: "How to play?", balance: "Balance",
+  topUp: "Top up demo wallet", mute: "Mute sound", unmute: "Unmute sound",
+  settings: "Settings", install: "Install App", language: "Language",
+  installHelp: "Use your browser's install option, or on iOS tap Share and then Add to Home Screen.",
+  installed: "McSiRun is already installed.",
+  betControls: "Betting controls", bet: "Bet amount", minimum: "Minimum bet", maximum: "Maximum bet", minShort: "MIN", maxShort: "MAX",
+  difficulty: "Difficulty", hitRisk: "Hit risk", easy: "Easy", medium: "Medium",
+  hard: "Hard", hardcore: "Hardcore", play: "Play", playAgain: "Play Again", go: "GO", cashOut: "CASH OUT",
+  step: "STEP", multiplier: "MULTIPLIER", prize: "GRAND PRIZE",
+  won: "YOU WON!", lost: "SNIPED! TRY AGAIN", betterLuck: "Better luck on the next run",
+  stage: "Game stage showing a chicken crossing crates", closeInstructions: "Close instructions",
+  howTitle: "HOW TO PLAY", stakeTitle: "SET YOUR STAKE", stakeText: "Choose your bet and risk level.",
+  moveTitle: "MAKE YOUR MOVE", moveText: "Press GO to hop to the next crate.",
+  takeTitle: "TAKE THE WIN", takeText: "Cash out after a safe landing, or risk another hop.",
+  dropTitle: "CLASSIFIED DROP", dropText: "At step 10, claim the pistol and cash out or keep running.",
+  grandTitle: "GRAND PRIZE", grandText: "Reach step 20 to win the AWP | Dragon Lore and cash out automatically.",
+  warning: "A sniper hit ends the round and forfeits the stake.", understood: "ROGER THAT",
+  closeTopUp: "Close top up", insufficient: "Not enough balance for this bet - top up your demo wallet!",
+  freeCredits: "Add free demo credits and keep playing.", presets: "Top-up presets",
+  customAmount: "Custom amount ($)", addFunds: "ADD FUNDS", demoOnly: "Demo credits only. No real money is involved.",
+  invalidAmount: "Enter a positive amount that keeps the balance within the supported range.",
+  classified: "CLASSIFIED DROP", complete: "ROUND COMPLETE", legendaryUnlocked: "LEGENDARY SKIN UNLOCKED!",
+  milestoneUnlocked: "MILESTONE SKIN UNLOCKED!", niceRun: "NICE RUN!",
+  milestoneChoice: "Claim the pistol now, or keep it at risk as you run.",
+  rewardText: "A reward for making the right move.", pistol: "Classified Pistol | Ember",
+  sticker: "Tactical Sticker", at: "at", claimPistol: "CLAIM PISTOL & CASH OUT",
+  claimContinue: "CLAIM & CONTINUE", keepRunning: "KEEP RUNNING TO STEP 20",
+};
+
+const ru: Record<keyof typeof en, string> = {
+  home: "На главную McSiRun", howTo: "Как играть?", balance: "Баланс",
+  topUp: "Пополнить демо-кошелёк", mute: "Выключить звук", unmute: "Включить звук",
+  settings: "Настройки", install: "Установить приложение", language: "Язык",
+  installHelp: "Выберите установку в меню браузера. На iOS нажмите «Поделиться», затем «На экран Домой».",
+  installed: "McSiRun уже установлен.",
+  betControls: "Управление ставкой", bet: "Сумма ставки", minimum: "Минимальная ставка", maximum: "Максимальная ставка", minShort: "МИН", maxShort: "МАКС",
+  difficulty: "Сложность", hitRisk: "Риск выстрела", easy: "Лёгкий", medium: "Средний",
+  hard: "Сложный", hardcore: "Хардкор", play: "Старт", playAgain: "Играть снова", go: "Вперёд", cashOut: "Забрать",
+  step: "ШАГ", multiplier: "МНОЖИТЕЛЬ", prize: "ГЛАВНЫЙ ПРИЗ",
+  won: "ВЫ ВЫИГРАЛИ!", lost: "ПОДСТРЕЛЕН! ПОПРОБУЙ ЕЩЁ", betterLuck: "Повезёт в следующем раунде",
+  stage: "Игровое поле: курица пересекает ящики", closeInstructions: "Закрыть правила",
+  howTitle: "КАК ИГРАТЬ", stakeTitle: "ВЫБЕРИТЕ СТАВКУ", stakeText: "Выберите ставку и уровень риска.",
+  moveTitle: "СДЕЛАЙТЕ ХОД", moveText: "Нажмите «Вперёд», чтобы прыгнуть на следующий ящик.",
+  takeTitle: "ЗАБЕРИТЕ ВЫИГРЫШ", takeText: "Заберите выигрыш после приземления или рискните ещё раз.",
+  dropTitle: "ОСОБЫЙ ПРИЗ", dropText: "На шаге 10 заберите пистолет и выигрыш или продолжайте игру.",
+  grandTitle: "ГЛАВНЫЙ ПРИЗ", grandText: "Достигните шага 20, чтобы выиграть AWP | Dragon Lore и автоматически забрать выигрыш.",
+  warning: "Попадание снайпера завершает раунд, а ставка сгорает.", understood: "ПОНЯТНО",
+  closeTopUp: "Закрыть пополнение", insufficient: "Недостаточно средств для ставки - пополните демо-кошелёк!",
+  freeCredits: "Добавьте бесплатные демо-кредиты и продолжайте игру.", presets: "Варианты пополнения",
+  customAmount: "Другая сумма ($)", addFunds: "ПОПОЛНИТЬ", demoOnly: "Только демо-кредиты. Реальные деньги не используются.",
+  invalidAmount: "Введите положительную сумму в допустимых пределах баланса.",
+  classified: "ОСОБЫЙ ПРИЗ", complete: "РАУНД ЗАВЕРШЁН", legendaryUnlocked: "ЛЕГЕНДАРНЫЙ СКИН ОТКРЫТ!",
+  milestoneUnlocked: "ПРИЗОВОЙ СКИН ОТКРЫТ!", niceRun: "ОТЛИЧНАЯ ИГРА!",
+  milestoneChoice: "Заберите пистолет сейчас или продолжайте игру, рискуя им.",
+  rewardText: "Награда за правильное решение.", pistol: "Особый пистолет | Ember",
+  sticker: "Тактическая наклейка", at: "при", claimPistol: "ЗАБРАТЬ ПИСТОЛЕТ И ВЫИГРЫШ",
+  claimContinue: "ЗАБРАТЬ И ПРОДОЛЖИТЬ", keepRunning: "ПРОДОЛЖИТЬ ДО ШАГА 20",
+};
+
+export function useI18n() {
+  const language = useAppSelector((state) => state.wallet.language);
+  return language === "ru" ? ru : en;
+}

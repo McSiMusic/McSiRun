@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="96" viewBox="0 0 300 96">
+  <defs><linearGradient id="gold" x2=".8" y2="1"><stop stop-color="#fff2ab"/><stop offset=".45" stop-color="#d7a643"/><stop offset="1" stop-color="#76521d"/></linearGradient><pattern id="grip" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0h4v4H0zm4 4h4v4H4z" fill="#7b653e"/></pattern></defs>
+  <path d="M18 45h115l9-8h94l17 8 24-2 8 6-5 8-20 1-7 20h-19l7-21H125l-8-4H18Z" fill="url(#gold)" stroke="#3d402c" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M8 41h125v7H8zM4 39h15v11H4z" fill="#3e4935" stroke="#1b2620" stroke-width="2"/>
+  <path d="M161 22h52l8 7-8 7h-52l-5-7Z" fill="#384737" stroke="#1d291f" stroke-width="3"/><circle cx="158" cy="29" r="10" fill="#25342b" stroke="#a8ab78" stroke-width="3"/><circle cx="158" cy="29" r="6" fill="#728e81"/>
+  <path d="M174 37v-5m27 5v-5M245 51l14 3-7 20h-13Z" stroke="#434631" stroke-width="5"/><path d="M245 54l12 2-5 15h-11Z" fill="url(#grip)"/>
+  <path d="M140 47c15-12 26 5 40-1 9-4 15-8 22-4-8 0-7 9-17 10-14 3-21-6-33 2l6-6-10 2Z" fill="#a64028" stroke="#f1ca68" stroke-width="1.8"/>
+  <path d="M131 58h33l-4 9h-22z" fill="#4d4b31"/><path d="M173 55v8c0 8 12 8 15 0l2-8" fill="none" stroke="#363e30" stroke-width="3"/>
+  <path d="M22 44h100m30 11h65m40-6 17-1" fill="none" stroke="#fff0ae" stroke-width="1.5" opacity=".7"/>
+</svg>
