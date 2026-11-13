@@ -1,14 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import {
-  DIFFICULTIES,
-  INITIAL_BALANCE,
-  type Difficulty,
-  type PersistedState,
-  type Language,
-} from "@/src/types/game";
-import { clampBet } from "@/src/lib/gameMath";
-
-type WalletState = PersistedState["wallet"];
+import type { Difficulty, Language, WalletState } from "@/src/types/game";
+import { INITIAL_BALANCE, MAX_BALANCE } from "@/src/lib/gameConstants";
+import { clampBet, roundMoney } from "@/src/lib/gameMath";
+import { roundCashedOut, roundStarted, stepResolved } from "@/src/store/roundActions";
 
 const initialState: WalletState = {
   balance: INITIAL_BALANCE,
@@ -18,17 +12,17 @@ const initialState: WalletState = {
   language: "en",
 };
 
+function credit(state: WalletState, amount: number) {
+  state.balance = Math.min(MAX_BALANCE, roundMoney(state.balance + amount));
+}
+
 const walletSlice = createSlice({
   name: "wallet",
   initialState,
   reducers: {
+    /** The payload must come from `parseSessionState`, which validates every field. */
     hydrateWallet(state, action: PayloadAction<Omit<WalletState, "isMuted">>) {
-      state.balance = Math.max(0, action.payload.balance);
-      state.betAmount = clampBet(action.payload.betAmount);
-      state.difficulty = action.payload.difficulty in DIFFICULTIES
-        ? action.payload.difficulty
-        : "medium";
-      state.language = action.payload.language === "ru" ? "ru" : "en";
+      Object.assign(state, action.payload);
     },
     setBetAmount(state, action: PayloadAction<number>) {
       state.betAmount = clampBet(action.payload);
@@ -42,22 +36,24 @@ const walletSlice = createSlice({
     setLanguage(state, action: PayloadAction<Language>) {
       state.language = action.payload;
     },
-    debitBet(state, action: PayloadAction<number>) {
-      state.balance = Math.max(0, Number((state.balance - action.payload).toFixed(2)));
+    topUp(state, action: PayloadAction<number>) {
+      const amount = action.payload;
+      if (Number.isFinite(amount) && amount >= 0.01) credit(state, amount);
     },
-    creditBalance(state, action: PayloadAction<number>) {
-      state.balance = Number((state.balance + action.payload).toFixed(2));
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(roundStarted, (state, action) => {
+        const { bet } = action.payload;
+        if (Number.isFinite(bet) && bet > 0 && bet <= state.balance) state.balance = roundMoney(state.balance - bet);
+      })
+      .addCase(stepResolved, (state, action) => {
+        const { record } = action.payload;
+        if (record?.result === "cashed_out") credit(state, record.payout);
+      })
+      .addCase(roundCashedOut, (state, action) => credit(state, action.payload.record.payout));
   },
 });
 
-export const {
-  hydrateWallet,
-  setBetAmount,
-  setDifficulty,
-  setMuted,
-  setLanguage,
-  debitBet,
-  creditBalance,
-} = walletSlice.actions;
+export const { hydrateWallet, setBetAmount, setDifficulty, setMuted, setLanguage, topUp } = walletSlice.actions;
 export default walletSlice.reducer;

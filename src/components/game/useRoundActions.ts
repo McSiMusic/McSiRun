@@ -1,110 +1,74 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppStore } from "@/src/store/hooks";
-import { creditBalance, debitBet } from "@/src/store/walletSlice";
-import { beginElimination, finishRound, safeStep, startRound } from "@/src/store/gameSlice";
-import { calculatePayout, MAX_STEPS, multiplierForStep, stepIsSafe } from "@/src/lib/gameMath";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppDispatch } from "@/src/store/hooks";
+import { milestoneDeclined, winClaimed } from "@/src/store/gameSlice";
+import { advanceStep, cashOut, playRound, type StepOutcome } from "@/src/store/roundThunks";
+import { JUMP_DURATION_MS } from "@/src/lib/gameConstants";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
-import type { RoundRecord } from "@/src/types/game";
 
+/** Play Again appears where Cash Out was; ignore it briefly so a double-click cannot place a new bet. */
+export const PLAY_REARM_MS = 500;
+
+/**
+ * Thin UI controller: game rules and money live in the round thunks, which settle each step
+ * immediately. This hook only paces the jump presentation and plays feedback sounds, so an
+ * unmount, reload or audio error mid-animation can never leave the round half-applied.
+ */
 export function useRoundActions(onInsufficientBalance: () => void) {
   const dispatch = useAppDispatch();
-  const store = useAppStore();
-  const [jumping, setJumping] = useState(false);
-  const [win, setWin] = useState<RoundRecord | null>(null);
-  const [milestone, setMilestone] = useState<RoundRecord | null>(null);
-  const milestonePending = useRef(false);
-  const pending = useRef(false);
+  const [jumpFromStep, setJumpFromStep] = useState<number | null>(null);
+  const animating = useRef(false);
   const timer = useRef<number | null>(null);
+  const rearmTimer = useRef<number | null>(null);
 
   useEffect(() => () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
+    if (rearmTimer.current !== null) window.clearTimeout(rearmTimer.current);
   }, []);
 
-  const play = () => {
-    const { wallet, game } = store.getState();
-    soundEngine.playSound("ui_click");
-    if (pending.current || milestonePending.current || win || game.status === "active" || game.isEliminating) return;
-    if (wallet.balance <= 0 || wallet.balance < wallet.betAmount) {
-      onInsufficientBalance();
-      return;
-    }
-    dispatch(debitBet(wallet.betAmount));
-    dispatch(startRound({ bet: wallet.betAmount, difficulty: wallet.difficulty }));
-    next();
-  };
-
-  const settle = (record: RoundRecord, status: "won" | "lost", showWin = true) => {
-    if (status === "won") {
-      dispatch(creditBalance(record.payout));
-      if (showWin && record.prize) setWin(record);
-    }
-    dispatch(finishRound({ status, record }));
-  };
-
-  const next = () => {
-    const { wallet, game } = store.getState();
-    if (pending.current || milestonePending.current || game.isEliminating || game.status !== "active" || game.currentStep >= MAX_STEPS) return;
-    pending.current = true;
-    setJumping(true);
+  const present = useCallback((outcome: StepOutcome) => {
+    animating.current = true;
+    setJumpFromStep(outcome.fromStep);
     soundEngine.playSound("chicken_jump");
-    const safe = stepIsSafe(wallet.difficulty);
-    if (!safe) dispatch(beginElimination());
     timer.current = window.setTimeout(() => {
-      const step = game.currentStep + 1;
-      const multiplier = multiplierForStep(wallet.difficulty, step);
-      if (safe) {
-        dispatch(safeStep({ step, multiplier }));
-        soundEngine.playSound("step_safe");
-        if (step === 10) {
-          milestonePending.current = true;
-          setMilestone({
-            id: crypto.randomUUID(), bet: game.roundBet, steps: step, multiplier,
-            payout: calculatePayout(game.roundBet, multiplier),
-            result: "cashed_out", difficulty: wallet.difficulty, prize: "Classified Pistol | Ember",
-          });
-        } else if (step === MAX_STEPS) {
-          settle({
-            id: crypto.randomUUID(), bet: game.roundBet, steps: step, multiplier,
-            payout: calculatePayout(game.roundBet, multiplier),
-            result: "cashed_out", difficulty: wallet.difficulty, prize: "AWP | Dragon Lore",
-          }, "won");
-          soundEngine.playSound("cashout");
-        }
-      } else {
-        settle({
-          id: crypto.randomUUID(), bet: game.roundBet, steps: game.currentStep,
-          multiplier: game.multiplier, payout: 0, result: "hit", difficulty: wallet.difficulty,
-        }, "lost");
-        soundEngine.playSound("awp_shot");
-      }
-      pending.current = false;
       timer.current = null;
-      setJumping(false);
-    }, 380);
-  };
+      animating.current = false;
+      setJumpFromStep(null);
+      if (!outcome.safe) return soundEngine.playSound("awp_shot");
+      soundEngine.playSound("step_safe");
+      if (outcome.finished) soundEngine.playSound("cashout");
+    }, JUMP_DURATION_MS);
+  }, []);
 
-  const cashOut = (claimMilestone = false) => {
-    const { wallet, game } = store.getState();
-    if (pending.current || game.isEliminating || (milestonePending.current && !claimMilestone) || game.status !== "active" || game.currentStep < 1) return;
-    settle({
-      id: crypto.randomUUID(), bet: game.roundBet, steps: game.currentStep,
-      multiplier: game.multiplier, payout: calculatePayout(game.roundBet, game.multiplier),
-      result: "cashed_out", difficulty: wallet.difficulty,
-      prize: game.currentStep >= 10 ? "Classified Pistol | Ember" : undefined,
-    }, "won", !claimMilestone);
-    if (claimMilestone) {
-      milestonePending.current = false;
-      setMilestone(null);
-    }
+  const play = useCallback(() => {
+    soundEngine.playSound("ui_click");
+    if (animating.current || rearmTimer.current !== null) return;
+    const result = dispatch(playRound());
+    if (result.kind === "insufficient") onInsufficientBalance();
+    else if (result.kind === "started") present(result.outcome);
+  }, [dispatch, onInsufficientBalance, present]);
+
+  const next = useCallback(() => {
+    if (animating.current) return;
+    const outcome = dispatch(advanceStep());
+    if (outcome) present(outcome);
+  }, [dispatch, present]);
+
+  const settle = useCallback((claimMilestone: boolean) => {
+    if (animating.current) return;
+    if (!dispatch(cashOut(claimMilestone))) return;
     soundEngine.playSound("cashout");
-  };
+    rearmTimer.current = window.setTimeout(() => { rearmTimer.current = null; }, PLAY_REARM_MS);
+  }, [dispatch]);
 
   return {
-    jumping, play, next, cashOut: () => cashOut(), win, milestone,
-    claim: () => setWin(null),
-    claimMilestone: () => cashOut(true),
-    keepRunning: () => { milestonePending.current = false; setMilestone(null); },
+    jumpFromStep,
+    play,
+    next,
+    cashOut: useCallback(() => settle(false), [settle]),
+    claimMilestone: useCallback(() => settle(true), [settle]),
+    keepRunning: useCallback(() => { dispatch(milestoneDeclined()); }, [dispatch]),
+    claimWin: useCallback(() => { dispatch(winClaimed()); }, [dispatch]),
   };
 }

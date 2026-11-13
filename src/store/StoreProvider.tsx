@@ -13,8 +13,10 @@ function SessionHydrator() {
 
   useEffect(() => {
     const saved = readSessionState();
-    if (saved?.wallet) dispatch(hydrateWallet(saved.wallet));
-    if (saved?.game) dispatch(hydrateGame({ history: saved.game.history }));
+    if (saved) {
+      dispatch(hydrateWallet(saved.wallet));
+      dispatch(hydrateGame(saved.game));
+    }
     dispatch(setMuted(readMutedPreference()));
     const syncMute = (event: StorageEvent) => {
       if (event.key === SOUND_STORAGE_KEY) dispatch(setMuted(readMutedPreference()));

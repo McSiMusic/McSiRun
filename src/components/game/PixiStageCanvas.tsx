@@ -5,7 +5,7 @@ import { Application } from "pixi.js";
 import { configurePixi } from "@/src/pixi/configurePixi";
 import { loadSceneTextures } from "@/src/pixi/textures/assets";
 import { GameSceneManager } from "@/src/pixi/GameSceneManager";
-import type { SceneSnapshot } from "@/src/pixi/GameSceneManager";
+import type { SceneSnapshot } from "@/src/pixi/sceneLayout";
 
 interface Props {
   snapshot: SceneSnapshot;
@@ -14,9 +14,13 @@ interface Props {
   onEliminationComplete: (eventId: number) => void;
 }
 
+/** Fixed at 2: meets the art contract without 9x fill cost on DPR-3 phones. */
+const RENDER_RESOLUTION = 2;
+
 export function PixiStageCanvas({ snapshot, reservedBottom, label, onEliminationComplete }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<GameSceneManager | null>(null);
+  const resizeRef = useRef<() => void>(() => {});
   const snapshotRef = useRef(snapshot);
   const reservedRef = useRef(reservedBottom);
   const completeRef = useRef(onEliminationComplete);
@@ -36,27 +40,38 @@ export function PixiStageCanvas({ snapshot, reservedBottom, label, onElimination
     let disposed = false;
     let initialized = false;
     let destroyed = false;
-    let cleanupObserver = () => {};
+    let frame = 0;
+    let observer: ResizeObserver | null = null;
     const app = new Application();
     const destroyApp = () => {
       if (destroyed) return;
       destroyed = true;
-      app.destroy(true);
+      sceneRef.current?.destroy();
+      sceneRef.current = null;
+      // Children (incl. Text canvases) are destroyed; shared Assets textures are kept for remounts.
+      app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false });
+    };
+    const applySize = () => {
+      frame = 0;
+      const scene = sceneRef.current;
+      if (!scene) return;
+      app.renderer.resize(host.clientWidth, host.clientHeight);
+      scene.resize(host.clientWidth, host.clientHeight, reservedRef.current);
+    };
+    resizeRef.current = () => {
+      if (!frame) frame = window.requestAnimationFrame(applySize);
     };
     void app.init({
       background: "#3B426E",
-      antialias: true,
+      antialias: false,
       roundPixels: true,
-      resolution: Math.max(window.devicePixelRatio || 1, 2),
+      resolution: RENDER_RESOLUTION,
       autoDensity: true,
       width: host.clientWidth,
       height: host.clientHeight,
     }).then(async () => {
       initialized = true;
-      if (disposed) {
-        destroyApp();
-        return;
-      }
+      if (disposed) return destroyApp();
       const textures = await loadSceneTextures();
       if (disposed) return;
       host.appendChild(app.canvas);
@@ -64,15 +79,8 @@ export function PixiStageCanvas({ snapshot, reservedBottom, label, onElimination
       sceneRef.current = scene;
       scene.resize(host.clientWidth, host.clientHeight, reservedRef.current);
       scene.update(snapshotRef.current);
-      const observer = new ResizeObserver(() => {
-        const width = host.clientWidth;
-        const height = host.clientHeight;
-        app.renderer.resize(width, height);
-        scene.resize(width, height, reservedRef.current);
-        scene.update(snapshotRef.current);
-      });
+      observer = new ResizeObserver(() => resizeRef.current());
       observer.observe(host);
-      cleanupObserver = () => observer.disconnect();
     }).catch((error: unknown) => {
       if (!disposed) {
         console.error("Unable to initialize the PixiJS game stage.", error);
@@ -81,8 +89,9 @@ export function PixiStageCanvas({ snapshot, reservedBottom, label, onElimination
     });
     return () => {
       disposed = true;
-      cleanupObserver();
-      sceneRef.current = null;
+      observer?.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+      resizeRef.current = () => {};
       if (initialized) destroyApp();
     };
   }, []);
@@ -94,15 +103,8 @@ export function PixiStageCanvas({ snapshot, reservedBottom, label, onElimination
 
   useEffect(() => {
     reservedRef.current = reservedBottom;
-    const host = hostRef.current;
-    if (host) sceneRef.current?.resize(host.clientWidth, host.clientHeight, reservedBottom);
+    resizeRef.current();
   }, [reservedBottom]);
 
-  return (
-    <div
-      ref={hostRef}
-      className="game-stage"
-      aria-label={label}
-    />
-  );
+  return <div ref={hostRef} className="game-stage" aria-label={label} />;
 }

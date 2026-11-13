@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import { creditBalance } from "@/src/store/walletSlice";
+import { topUp } from "@/src/store/walletSlice";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
+import { MAX_BALANCE } from "@/src/lib/gameConstants";
 
 interface Props {
   insufficient: boolean;
@@ -22,13 +23,13 @@ export function TopUpModal({ insufficient, onClose }: Props) {
 
   const addFunds = () => {
     const value = Number(amount);
-    if (!Number.isFinite(value) || value < 0.01 || balance + value > Number.MAX_SAFE_INTEGER / 100) {
+    if (!Number.isFinite(value) || value < 0.01 || balance + value > MAX_BALANCE) {
       soundEngine.playSound("ui_click");
       setError(true);
       return;
     }
     const rounded = Number(value.toFixed(2));
-    dispatch(creditBalance(rounded));
+    dispatch(topUp(rounded));
     soundEngine.playSound("cashout");
     onClose();
   };

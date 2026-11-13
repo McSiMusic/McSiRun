@@ -1,10 +1,13 @@
 import { DIFFICULTIES, type Difficulty } from "@/src/types/game";
+import { MAX_BET, MAX_STEPS, MIN_BET } from "@/src/lib/gameConstants";
 
-export const MAX_STEPS = 20;
+export function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
 export function multiplierForStep(difficulty: Difficulty, step: number): number {
   const boundedStep = Math.max(0, Math.min(MAX_STEPS, Math.trunc(step)));
-  return Number(Math.pow(DIFFICULTIES[difficulty].growth, boundedStep).toFixed(2));
+  return roundMoney(Math.pow(DIFFICULTIES[difficulty].growth, boundedStep));
 }
 
 export function stepIsSafe(difficulty: Difficulty, randomValue = Math.random()): boolean {
@@ -12,10 +15,10 @@ export function stepIsSafe(difficulty: Difficulty, randomValue = Math.random()):
 }
 
 export function calculatePayout(bet: number, multiplier: number): number {
-  return Number((bet * multiplier).toFixed(2));
+  return roundMoney(bet * multiplier);
 }
 
 export function clampBet(value: number): number {
-  if (!Number.isFinite(value)) return 1;
-  return Math.min(500, Math.max(1, Number(value.toFixed(2))));
+  if (!Number.isFinite(value)) return MIN_BET;
+  return Math.min(MAX_BET, Math.max(MIN_BET, roundMoney(value)));
 }

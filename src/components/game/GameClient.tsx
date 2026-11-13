@@ -1,22 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { BettingPanel } from "@/src/components/controls/BettingPanel";
 import { Header } from "@/src/components/layout/Header";
 import { TopUpModal } from "@/src/components/layout/TopUpModal";
 import { PixiStageCanvas } from "@/src/components/game/PixiStageCanvas";
 import { SkinWinModal } from "@/src/components/game/SkinWinModal";
+import { ResultBanner } from "@/src/components/game/ResultBanner";
 import { useRoundActions } from "@/src/components/game/useRoundActions";
+import { presentRound } from "@/src/components/game/presentRound";
 import { useAppDispatch, useAppSelector, useAppStore } from "@/src/store/hooks";
 import { completeElimination } from "@/src/store/gameSlice";
-import { MAX_STEPS } from "@/src/lib/gameMath";
+import { MAX_STEPS } from "@/src/lib/gameConstants";
+import { cashoutRecord } from "@/src/lib/roundRecords";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
-import { assetPath } from "@/src/lib/assetPath";
 
 export function GameClient() {
-  const wallet = useAppSelector((state) => state.wallet);
+  const isMuted = useAppSelector((state) => state.wallet.isMuted);
+  const language = useAppSelector((state) => state.wallet.language);
   const game = useAppSelector((state) => state.game);
   const dispatch = useAppDispatch();
   const store = useAppStore();
@@ -24,74 +26,61 @@ export function GameClient() {
   const [topUp, setTopUp] = useState<"manual" | "insufficient" | null>(null);
   const [dockHeight, setDockHeight] = useState(0);
   const [revealedLoss, setRevealedLoss] = useState<number | null>(null);
+  const showInsufficient = useCallback(() => setTopUp("insufficient"), []);
+  const actions = useRoundActions(showInsufficient);
+  const view = presentRound(game, actions.jumpFromStep);
   const revealLoss = useCallback((eventId: number) => {
     const current = store.getState().game;
     if (current.status !== "lost" || current.eventId !== eventId) return;
     setRevealedLoss(eventId);
     dispatch(completeElimination(eventId));
   }, [dispatch, store]);
-  const showResult = game.status === "won" || (game.status === "lost" && revealedLoss === game.eventId);
-  const { jumping, play, next, cashOut, win, milestone, claim, claimMilestone, keepRunning } =
-    useRoundActions(() => setTopUp("insufficient"));
+  const showResult = view.status === "won" || (view.status === "lost" && revealedLoss === game.eventId);
+  const milestone = useMemo(() => game.awaitingMilestoneChoice && !view.jumping
+    ? cashoutRecord(game.roundBet, game.currentStep, game.multiplier, game.trackDifficulty, "milestone")
+    : null, [game.awaitingMilestoneChoice, game.roundBet, game.currentStep, game.multiplier, game.trackDifficulty, view.jumping]);
+  const claim = view.jumping ? null : game.pendingClaim;
 
   useEffect(() => {
-    soundEngine.setMuted(wallet.isMuted);
+    soundEngine.setMuted(isMuted);
     soundEngine.preload();
-  }, [wallet.isMuted]);
-  useEffect(() => { document.documentElement.lang = wallet.language; }, [wallet.language]);
+  }, [isMuted]);
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
 
   const snapshot = useMemo(() => ({
-    status: game.status,
-    currentStep: game.currentStep,
+    status: view.status,
+    currentStep: view.currentStep,
     difficulty: game.trackDifficulty,
     eventId: game.eventId,
-    jumping,
-  }), [game.status, game.currentStep, game.eventId, game.trackDifficulty, jumping]);
+    jumping: view.jumping,
+  }), [view.status, view.currentStep, view.jumping, game.eventId, game.trackDifficulty]);
 
   return (
     <main className="game-shell">
       <Header onTopUp={() => setTopUp("manual")} />
       {topUp && <TopUpModal insufficient={topUp === "insufficient"} onClose={() => setTopUp(null)} />}
-      <SkinWinModal win={milestone ?? win} milestone={!!milestone}
-        onClaim={milestone ? claimMilestone : claim} onKeepRunning={keepRunning} />
+      <SkinWinModal win={milestone ?? claim} milestone={!!milestone}
+        onClaim={milestone ? actions.claimMilestone : actions.claimWin} onKeepRunning={actions.keepRunning} />
       <div className="game-content">
         <section className="stage-card">
           <PixiStageCanvas snapshot={snapshot} reservedBottom={dockHeight + 20} label={t.stage}
             onEliminationComplete={revealLoss} />
           <div className={`stage-dim${showResult ? " visible" : ""}`} />
           <div className="stage-footer">
-            <span>{t.step} {game.currentStep} / {MAX_STEPS}</span>
-            {game.status === "won" && game.currentStep === MAX_STEPS && (
-              <strong className="prize-message">{t.prize}: AWP | DRAGON LORE</strong>
+            <span>{t.step} {view.currentStep} / {MAX_STEPS}</span>
+            {view.status === "won" && view.currentStep === MAX_STEPS && (
+              <strong className="prize-message">{t.prize}: {t.dragonLore.toUpperCase()}</strong>
             )}
             <div className="multiplier-display">
               <span>{t.multiplier}</span>
               <span className="compact-dot">•</span>
-              <strong>{game.multiplier.toFixed(2)}x</strong>
+              <strong>{view.multiplier.toFixed(2)}x</strong>
             </div>
           </div>
-          {showResult && game.history[0] && (
-            <div className="result-zone" style={{ bottom: dockHeight + 20 }} aria-live="polite">
-              <div className={`result-banner ${game.status === "won" ? "result-win" : "result-loss"}`}>
-                {game.status === "won" ? (
-                  <>
-                    <strong>{t.won} +${game.history[0].payout.toFixed(2)} ({game.history[0].multiplier.toFixed(2)}x)</strong>
-                    {game.history[0].prize && (
-                      <div className="result-prize">
-                        <Image src={assetPath(`/sprites/${game.history[0].steps === MAX_STEPS ? "awp-dragon-lore" : "milestone-pistol"}.svg`)}
-                          alt="" width={80} height={40} unoptimized loading="eager" />
-                        <span>{game.history[0].prize === "Classified Pistol | Ember" ? t.pistol : game.history[0].prize}</span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <><strong>{t.lost}</strong><span>{t.betterLuck}</span></>
-                )}
-              </div>
-            </div>
-          )}
+          {showResult && game.history[0] && <ResultBanner record={game.history[0]} bottom={dockHeight + 20} />}
         </section>
-        <BettingPanel onPlay={play} onNext={next} onCashOut={cashOut} busy={jumping || !!milestone || game.isEliminating} onHeightChange={setDockHeight} />
+        <BettingPanel view={view} onPlay={actions.play} onNext={actions.next} onCashOut={actions.cashOut}
+          busy={view.jumping || !!milestone || game.isEliminating} onHeightChange={setDockHeight} />
       </div>
     </main>
   );

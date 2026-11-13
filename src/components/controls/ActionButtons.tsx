@@ -19,10 +19,10 @@ export function ActionButtons({ status, hasPlayedRound, step, payout, busy, onPl
   if (status === "active") {
     return (
       <div className="action-buttons active-actions">
-        <button className="cashout-button" onClick={onCashOut} disabled={step < 1 || busy}>
+        <button key="cashout" className="cashout-button" onClick={onCashOut} disabled={step < 1 || busy}>
           {t.cashOut} <strong>{payout.toFixed(2)} $</strong>
         </button>
-        <button className="next-button" onClick={onNext} disabled={busy}>
+        <button key="go" className="next-button" onClick={onNext} disabled={busy}>
           {t.go}
         </button>
       </div>
@@ -30,7 +30,7 @@ export function ActionButtons({ status, hasPlayedRound, step, payout, busy, onPl
   }
   return (
     <div className="action-buttons">
-      <button className="play-button" onClick={onPlay} disabled={busy}>
+      <button key="play" className="play-button" onClick={onPlay} disabled={busy}>
         {hasPlayedRound ? t.playAgain : t.play}
       </button>
     </div>

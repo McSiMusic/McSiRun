@@ -1,5 +1,9 @@
 import { Container, Sprite } from "pixi.js";
 import type { SceneTextures } from "@/src/pixi/textures/assets";
+import { JUMP_DURATION_MS, JUMP_TIMING } from "@/src/lib/gameConstants";
+
+const { crouch: CROUCH, hop: HOP, land: LAND } = JUMP_TIMING;
+const AIRBORNE_END = CROUCH + HOP;
 
 export class ChickenActor {
   readonly container = new Container();
@@ -8,7 +12,7 @@ export class ChickenActor {
   private readonly wing: Sprite;
   private readonly leftLeg: Sprite;
   private readonly rightLeg: Sprite;
-  private animation = 380;
+  private animation = JUMP_DURATION_MS;
   private elapsed = 0;
   private fromX = 0;
   private toX = 0;
@@ -56,14 +60,14 @@ export class ChickenActor {
   }
 
   completeJump() {
-    this.animation = 380;
+    this.animation = JUMP_DURATION_MS;
     this.container.x = this.toX;
     this.fromStreet = false;
   }
 
   reset(x: number) {
     this.fromX = this.toX = x;
-    this.animation = 380;
+    this.animation = JUMP_DURATION_MS;
     this.onStreet = true;
     this.fromStreet = false;
     this.container.visible = true;
@@ -80,19 +84,19 @@ export class ChickenActor {
   tick(deltaMs: number, streetY: number, lidY: number) {
     if (!this.container.visible) return;
     this.elapsed += deltaMs;
-    this.animation = Math.min(380, this.animation + deltaMs);
+    this.animation = Math.min(JUMP_DURATION_MS, this.animation + deltaMs);
     const t = this.animation;
-    const hop = Math.max(0, Math.min(1, (t - 60) / 240));
+    const hop = Math.max(0, Math.min(1, (t - CROUCH) / HOP));
     this.container.x = this.fromX + (this.toX - this.fromX) * hop;
     const feetY = this.onStreet ? streetY : this.fromStreet ? streetY + (lidY - streetY) * hop : lidY;
-    this.container.y = feetY - this.footOffset - (t < 60 ? -5 * t / 60 : t < 300 ? Math.sin(hop * Math.PI) * 62 : Math.sin((t - 300) / 80 * Math.PI) * 6);
+    this.container.y = feetY - this.footOffset - (t < CROUCH ? -5 * t / CROUCH : t < AIRBORNE_END ? Math.sin(hop * Math.PI) * 62 : Math.sin((t - AIRBORNE_END) / LAND * Math.PI) * 6);
     const breath = Math.sin(this.elapsed / 400) * 0.025;
-    const crouch = t < 60 ? t / 60 * 0.16 : t >= 300 && t < 380 ? Math.sin((t - 300) / 80 * Math.PI) * 0.12 : 0;
+    const crouch = t < CROUCH ? t / CROUCH * 0.16 : t >= AIRBORNE_END && t < JUMP_DURATION_MS ? Math.sin((t - AIRBORNE_END) / LAND * Math.PI) * 0.12 : 0;
     this.body.scale.set(0.78 * (1 + crouch - breath), 0.78 * (1 - crouch + breath));
     this.head.rotation = Math.sin(this.elapsed / 800) * 0.06 + (this.elapsed % 4000 < 200 ? 0.16 : 0);
     this.head.y = -60 + Math.sin(this.elapsed / 500) * 2;
-    this.wing.rotation = t >= 60 && t < 300 ? Math.sin(t / 24) * 0.55 : Math.sin(this.elapsed / 700) * 0.06;
-    this.leftLeg.rotation = t < 300 ? -Math.sin(hop * Math.PI) * 0.7 : 0;
+    this.wing.rotation = t >= CROUCH && t < AIRBORNE_END ? Math.sin(t / 24) * 0.55 : Math.sin(this.elapsed / 700) * 0.06;
+    this.leftLeg.rotation = t < AIRBORNE_END ? -Math.sin(hop * Math.PI) * 0.7 : 0;
     this.rightLeg.rotation = -this.leftLeg.rotation;
   }
 }

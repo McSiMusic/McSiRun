@@ -49,8 +49,15 @@ export function PwaRegistrar({ children }: { children: React.ReactNode }) {
     window.addEventListener("beforeinstallprompt", capture);
     window.addEventListener("appinstalled", onInstalled);
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register(assetPath("/sw.js")).catch((error: unknown) =>
-        console.error("Unable to register the McSiRun service worker.", error));
+      if (process.env.NODE_ENV === "production") {
+        void navigator.serviceWorker.register(assetPath("/sw.js")).catch((error: unknown) =>
+          console.error("Unable to register the McSiRun service worker.", error));
+      } else {
+        // A worker left over from a production run would serve stale assets during development.
+        void navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+          .catch((error: unknown) => console.error("Unable to remove the development service worker.", error));
+      }
     }
     return () => {
       window.removeEventListener("beforeinstallprompt", capture);

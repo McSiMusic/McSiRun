@@ -28,6 +28,7 @@ const en = {
   rewardText: "A reward for making the right move.", pistol: "Classified Pistol | Ember",
   sticker: "Tactical Sticker", at: "at", claimPistol: "CLAIM PISTOL & CASH OUT",
   claimContinue: "CLAIM & CONTINUE", keepRunning: "KEEP RUNNING TO STEP 20",
+  dragonLore: "AWP | Dragon Lore",
 };
 
 const ru: Record<keyof typeof en, string> = {
@@ -58,9 +59,12 @@ const ru: Record<keyof typeof en, string> = {
   rewardText: "Награда за правильное решение.", pistol: "Особый пистолет | Ember",
   sticker: "Тактическая наклейка", at: "при", claimPistol: "ЗАБРАТЬ ПИСТОЛЕТ И ВЫИГРЫШ",
   claimContinue: "ЗАБРАТЬ И ПРОДОЛЖИТЬ", keepRunning: "ПРОДОЛЖИТЬ ДО ШАГА 20",
+  dragonLore: "AWP | Dragon Lore",
 };
 
-export function useI18n() {
+export type Translations = typeof en;
+
+export function useI18n(): Translations {
   const language = useAppSelector((state) => state.wallet.language);
   return language === "ru" ? ru : en;
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import type { RoundRecord } from "@/src/types/game";
+import type { CashoutRecord } from "@/src/types/game";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
 import { assetPath } from "@/src/lib/assetPath";
+import { PRIZE_ART, prizeName } from "@/src/components/game/prizes";
 
 interface Props {
-  win: RoundRecord | null;
+  win: CashoutRecord | null;
   milestone: boolean;
   onClaim: () => void;
   onKeepRunning: () => void;
@@ -15,14 +16,12 @@ interface Props {
 
 export function SkinWinModal({ win, milestone, onClaim, onKeepRunning }: Props) {
   const t = useI18n();
-  if (!win) return null;
-  const legendary = win.steps === 20;
-  const classified = win.steps >= 10 && !legendary;
-  const art = legendary ? "awp-dragon-lore" : classified ? "milestone-pistol" : "tactical-sticker";
-  const reward = legendary ? "AWP | Dragon Lore" : classified ? t.pistol : t.sticker;
-  const close = () => {
+  if (!win?.prize) return null;
+  const legendary = win.prize === "dragonLore";
+  const reward = prizeName(win.prize, t);
+  const click = (action: () => void) => () => {
     soundEngine.playSound("ui_click");
-    onClaim();
+    action();
   };
 
   return (
@@ -30,22 +29,19 @@ export function SkinWinModal({ win, milestone, onClaim, onKeepRunning }: Props) 
       <section className={`win-modal ${legendary ? "win-legendary" : ""}`} role="dialog" aria-modal="true" aria-labelledby="win-title">
         <div className="win-rays" aria-hidden="true" />
         <div className="win-content">
-          <span className="win-eyebrow">{legendary ? t.grandTitle : classified ? t.classified : t.complete}</span>
-          <h2 id="win-title">{legendary ? t.legendaryUnlocked : classified ? t.milestoneUnlocked : t.niceRun}</h2>
+          <span className="win-eyebrow">{legendary ? t.grandTitle : t.classified}</span>
+          <h2 id="win-title">{legendary ? t.legendaryUnlocked : t.milestoneUnlocked}</h2>
           <p className="win-subtitle">{milestone ? t.milestoneChoice : t.rewardText}</p>
-          <div className={`win-art ${classified ? "classified-art" : ""}`}>
-            <Image src={assetPath(`/sprites/${art}.svg`)} alt={reward} width={300} height={180} unoptimized loading="eager" />
+          <div className={`win-art ${legendary ? "" : "classified-art"}`}>
+            <Image src={assetPath(PRIZE_ART[win.prize])} alt={reward} width={300} height={180} unoptimized loading="eager" />
           </div>
           <h3>{reward}</h3>
           <div className="win-payout"><strong>+${win.payout.toFixed(2)}</strong><span>{t.at} {win.multiplier.toFixed(2)}x</span></div>
-          <button className="claim-button" onClick={close} autoFocus>
+          <button className="claim-button" onClick={click(onClaim)} autoFocus>
             {milestone ? `${t.claimPistol} ($${win.payout.toFixed(2)})` : t.claimContinue}
           </button>
           {milestone && (
-            <button className="keep-running-button" onClick={() => {
-              soundEngine.playSound("ui_click");
-              onKeepRunning();
-            }}>{t.keepRunning}</button>
+            <button className="keep-running-button" onClick={click(onKeepRunning)}>{t.keepRunning}</button>
           )}
         </div>
       </section>

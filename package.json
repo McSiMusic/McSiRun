@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/assetPath.test.ts tests/awpFx.test.ts tests/chickenActor.test.ts tests/crateTrack.test.ts tests/gameScene.test.ts tests/roundLifecycle.test.ts tests/soundEngine.test.ts tests/soundStorage.test.ts tests/storeProvider.test.ts"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.14.0",
@@ -19,13 +20,16 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "jsdom": "^26.1.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
-    "tsx": "^4.20.6"
+    "vitest": "^3.2.7"
   }
 }

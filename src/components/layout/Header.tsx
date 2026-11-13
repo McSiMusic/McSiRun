@@ -19,8 +19,9 @@ export function Header({ onTopUp }: { onTopUp: () => void }) {
   const formattedBalance = `$${balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const toggleMute = () => {
-    soundEngine.playSound("ui_click");
+    // Apply the new state first so turning sound on is audibly confirmed.
     soundEngine.setMuted(!isMuted);
+    soundEngine.playSound("ui_click");
     dispatch(setMuted(!isMuted));
   };
 

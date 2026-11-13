@@ -1,8 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Difficulty, PersistedState, RoundRecord, RoundStatus } from "@/src/types/game";
-import { MAX_STEPS } from "@/src/lib/gameMath";
-
-type GameState = PersistedState["game"];
+import type { GameState, RoundRecord } from "@/src/types/game";
+import { HISTORY_LIMIT, MILESTONE_STEP } from "@/src/lib/gameConstants";
+import { multiplierForStep } from "@/src/lib/gameMath";
+import type { PersistedRound } from "@/src/store/sessionSchema";
+import { roundCashedOut, roundStarted, stepResolved } from "@/src/store/roundActions";
 
 const initialState: GameState = {
   status: "idle",
@@ -12,64 +13,82 @@ const initialState: GameState = {
   trackDifficulty: "medium",
   hasPlayedRound: false,
   isEliminating: false,
+  awaitingMilestoneChoice: false,
+  pendingClaim: null,
   history: [],
   eventId: 0,
 };
+
+function finish(state: GameState, record: RoundRecord) {
+  state.status = record.result === "hit" ? "lost" : "won";
+  state.history = [record, ...state.history].slice(0, HISTORY_LIMIT);
+  state.hasPlayedRound = true;
+  state.awaitingMilestoneChoice = false;
+  if (record.result === "hit") state.isEliminating = true;
+}
 
 const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
-    hydrateGame(state, action: PayloadAction<{ history: RoundRecord[] }>) {
-      state.status = "idle";
-      state.currentStep = 0;
-      state.multiplier = 1;
-      state.roundBet = 0;
+    /** The payload must come from `parseSessionState`. Restores an in-flight round, never the lock or Play Again. */
+    hydrateGame(state, action: PayloadAction<{ history: RoundRecord[]; round: PersistedRound | null }>) {
+      const { history, round } = action.payload;
+      state.status = round ? "active" : "idle";
+      state.currentStep = round?.currentStep ?? 0;
+      state.roundBet = round?.roundBet ?? 0;
+      if (round) state.trackDifficulty = round.trackDifficulty;
+      state.multiplier = multiplierForStep(state.trackDifficulty, state.currentStep);
+      state.awaitingMilestoneChoice = round?.awaitingMilestoneChoice ?? false;
       state.isEliminating = false;
-      state.history = action.payload.history.slice(0, 15);
-      state.eventId = 0;
-    },
-    startRound(state, action: PayloadAction<{ bet: number; difficulty: Difficulty }>) {
-      if (state.isEliminating) return;
-      state.status = "active";
-      state.currentStep = 0;
-      state.multiplier = 1;
-      state.roundBet = action.payload.bet;
-      state.trackDifficulty = action.payload.difficulty;
+      state.pendingClaim = null;
+      state.history = history.slice(0, HISTORY_LIMIT);
       state.eventId += 1;
-    },
-    beginElimination(state) {
-      if (state.status === "active") state.isEliminating = true;
     },
     completeElimination(state, action: PayloadAction<number>) {
       if (state.status === "lost" && state.eventId === action.payload) state.isEliminating = false;
     },
-    safeStep(state, action: PayloadAction<{ step: number; multiplier: number }>) {
-      if (state.status !== "active" || action.payload.step !== state.currentStep + 1 ||
-          action.payload.step > MAX_STEPS) return;
-      state.currentStep = action.payload.step;
-      state.multiplier = action.payload.multiplier;
-      state.eventId += 1;
+    milestoneDeclined(state) {
+      state.awaitingMilestoneChoice = false;
     },
-    finishRound(state, action: PayloadAction<{ status: RoundStatus; record: RoundRecord }>) {
-      state.status = action.payload.status;
-      state.eventId += 1;
-      state.history = [action.payload.record, ...state.history].slice(0, 15);
-      state.hasPlayedRound = true;
-      if (action.payload.status === "lost") state.isEliminating = true;
-      state.roundBet = 0;
+    winClaimed(state) {
+      state.pendingClaim = null;
     },
-    resetRound(state) {
-      if (state.isEliminating) return;
-      state.status = "idle";
-      state.currentStep = 0;
-      state.multiplier = 1;
-      state.roundBet = 0;
-      state.eventId += 1;
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(roundStarted, (state, action) => {
+        if (state.status === "active" || state.isEliminating) return;
+        state.status = "active";
+        state.currentStep = 0;
+        state.multiplier = 1;
+        state.roundBet = action.payload.bet;
+        state.trackDifficulty = action.payload.difficulty;
+        state.awaitingMilestoneChoice = false;
+        state.pendingClaim = null;
+        state.eventId += 1;
+      })
+      .addCase(stepResolved, (state, action) => {
+        const { step, multiplier, record } = action.payload;
+        if (state.status !== "active" || step !== state.currentStep + 1) return;
+        state.eventId += 1;
+        if (record?.result === "hit") return finish(state, record);
+        state.currentStep = step;
+        state.multiplier = multiplier;
+        state.awaitingMilestoneChoice = step === MILESTONE_STEP;
+        if (record) {
+          finish(state, record);
+          state.pendingClaim = record;
+        }
+      })
+      .addCase(roundCashedOut, (state, action) => {
+        if (state.status !== "active") return;
+        state.eventId += 1;
+        finish(state, action.payload.record);
+        if (action.payload.showClaim) state.pendingClaim = action.payload.record;
+      });
   },
 });
 
-export const { hydrateGame, startRound, beginElimination, completeElimination, safeStep, finishRound, resetRound } =
-  gameSlice.actions;
+export const { hydrateGame, completeElimination, milestoneDeclined, winClaimed } = gameSlice.actions;
 export default gameSlice.reducer;
