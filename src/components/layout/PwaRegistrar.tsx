@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { assetPath } from "@/src/lib/assetPath";
 
 interface InstallEvent extends Event {
@@ -18,11 +18,27 @@ const InstallContext = createContext<InstallState>({
   available: false, installed: false, install: async () => {},
 });
 
+function subscribeDisplayMode(onChange: () => void) {
+  const standalone = window.matchMedia("(display-mode: standalone)");
+  const fullscreen = window.matchMedia("(display-mode: fullscreen)");
+  standalone.addEventListener("change", onChange);
+  fullscreen.addEventListener("change", onChange);
+  return () => {
+    standalone.removeEventListener("change", onChange);
+    fullscreen.removeEventListener("change", onChange);
+  };
+}
+
+function isStandalone() {
+  const navigator = window.navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+}
+
 export function PwaRegistrar({ children }: { children: React.ReactNode }) {
   const [prompt, setPrompt] = useState<InstallEvent | null>(null);
-  const [installed, setInstalled] = useState(() => typeof window !== "undefined" &&
-    (window.matchMedia("(display-mode: standalone)").matches ||
-      window.matchMedia("(display-mode: fullscreen)").matches));
+  const [installed, setInstalled] = useState(false);
+  const standalone = useSyncExternalStore(subscribeDisplayMode, isStandalone, () => false);
 
   useEffect(() => {
     const capture = (event: Event) => {
@@ -54,7 +70,7 @@ export function PwaRegistrar({ children }: { children: React.ReactNode }) {
     }
   };
 
-  return <InstallContext.Provider value={{ available: !!prompt, installed, install }}>{children}</InstallContext.Provider>;
+  return <InstallContext.Provider value={{ available: !!prompt, installed: installed || standalone, install }}>{children}</InstallContext.Provider>;
 }
 
 export function usePwaInstall() {

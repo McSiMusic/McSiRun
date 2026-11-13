@@ -48,7 +48,7 @@ export function BettingPanel({ onPlay, onNext, onCashOut, busy, onHeightChange }
     <section ref={dockRef} className={`control-deck surface-card${locked ? " in-round" : ""}`} aria-label={t.betControls}>
       <div className="deck-settings">
         <BetInput value={wallet.betAmount} balance={wallet.balance} locked={locked} onChange={changeBet} />
-        <DifficultySelector value={wallet.difficulty} locked={locked} onChange={changeDifficulty} />
+        <DifficultySelector key={locked ? "locked" : "unlocked"} value={wallet.difficulty} locked={locked} onChange={changeDifficulty} />
       </div>
       <div className="deck-divider" />
       <ActionButtons

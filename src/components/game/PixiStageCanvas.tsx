@@ -47,7 +47,7 @@ export function PixiStageCanvas({ snapshot, reservedBottom, label, onElimination
       background: "#3B426E",
       antialias: true,
       roundPixels: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      resolution: Math.max(window.devicePixelRatio || 1, 2),
       autoDensity: true,
       width: host.clientWidth,
       height: host.clientHeight,

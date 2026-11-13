@@ -8,7 +8,8 @@ import { TopUpModal } from "@/src/components/layout/TopUpModal";
 import { PixiStageCanvas } from "@/src/components/game/PixiStageCanvas";
 import { SkinWinModal } from "@/src/components/game/SkinWinModal";
 import { useRoundActions } from "@/src/components/game/useRoundActions";
-import { useAppSelector } from "@/src/store/hooks";
+import { useAppDispatch, useAppSelector, useAppStore } from "@/src/store/hooks";
+import { completeElimination } from "@/src/store/gameSlice";
 import { MAX_STEPS } from "@/src/lib/gameMath";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
@@ -17,11 +18,18 @@ import { assetPath } from "@/src/lib/assetPath";
 export function GameClient() {
   const wallet = useAppSelector((state) => state.wallet);
   const game = useAppSelector((state) => state.game);
+  const dispatch = useAppDispatch();
+  const store = useAppStore();
   const t = useI18n();
   const [topUp, setTopUp] = useState<"manual" | "insufficient" | null>(null);
   const [dockHeight, setDockHeight] = useState(0);
   const [revealedLoss, setRevealedLoss] = useState<number | null>(null);
-  const revealLoss = useCallback((eventId: number) => setRevealedLoss(eventId), []);
+  const revealLoss = useCallback((eventId: number) => {
+    const current = store.getState().game;
+    if (current.status !== "lost" || current.eventId !== eventId) return;
+    setRevealedLoss(eventId);
+    dispatch(completeElimination(eventId));
+  }, [dispatch, store]);
   const showResult = game.status === "won" || (game.status === "lost" && revealedLoss === game.eventId);
   const { jumping, play, next, cashOut, win, milestone, claim, claimMilestone, keepRunning } =
     useRoundActions(() => setTopUp("insufficient"));
@@ -83,7 +91,7 @@ export function GameClient() {
             </div>
           )}
         </section>
-        <BettingPanel onPlay={play} onNext={next} onCashOut={cashOut} busy={jumping || !!milestone} onHeightChange={setDockHeight} />
+        <BettingPanel onPlay={play} onNext={next} onCashOut={cashOut} busy={jumping || !!milestone || game.isEliminating} onHeightChange={setDockHeight} />
       </div>
     </main>
   );

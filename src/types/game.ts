@@ -28,6 +28,7 @@ export interface PersistedState {
     roundBet: number;
     trackDifficulty: Difficulty;
     hasPlayedRound: boolean;
+    isEliminating: boolean;
     history: RoundRecord[];
     eventId: number;
   };

@@ -6,7 +6,7 @@ export const STORAGE_KEY = "cs16_chicken_road_state_v1";
 export const SOUND_STORAGE_KEY = "mcsirun_sound_muted";
 type SessionState = {
   wallet: Omit<PersistedState["wallet"], "isMuted">;
-  game: Omit<PersistedState["game"], "hasPlayedRound">;
+  game: Omit<PersistedState["game"], "hasPlayedRound" | "isEliminating">;
 };
 
 export function readSessionState(): Partial<SessionState> | null {

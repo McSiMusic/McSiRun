@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppStore } from "@/src/store/hooks";
 import { creditBalance, debitBet } from "@/src/store/walletSlice";
-import { finishRound, safeStep, startRound } from "@/src/store/gameSlice";
+import { beginElimination, finishRound, safeStep, startRound } from "@/src/store/gameSlice";
 import { calculatePayout, MAX_STEPS, multiplierForStep, stepIsSafe } from "@/src/lib/gameMath";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import type { RoundRecord } from "@/src/types/game";
@@ -25,7 +25,7 @@ export function useRoundActions(onInsufficientBalance: () => void) {
   const play = () => {
     const { wallet, game } = store.getState();
     soundEngine.playSound("ui_click");
-    if (pending.current || milestonePending.current || win || game.status === "active") return;
+    if (pending.current || milestonePending.current || win || game.status === "active" || game.isEliminating) return;
     if (wallet.balance <= 0 || wallet.balance < wallet.betAmount) {
       onInsufficientBalance();
       return;
@@ -45,11 +45,12 @@ export function useRoundActions(onInsufficientBalance: () => void) {
 
   const next = () => {
     const { wallet, game } = store.getState();
-    if (pending.current || milestonePending.current || game.status !== "active" || game.currentStep >= MAX_STEPS) return;
+    if (pending.current || milestonePending.current || game.isEliminating || game.status !== "active" || game.currentStep >= MAX_STEPS) return;
     pending.current = true;
     setJumping(true);
     soundEngine.playSound("chicken_jump");
     const safe = stepIsSafe(wallet.difficulty);
+    if (!safe) dispatch(beginElimination());
     timer.current = window.setTimeout(() => {
       const step = game.currentStep + 1;
       const multiplier = multiplierForStep(wallet.difficulty, step);
@@ -86,7 +87,7 @@ export function useRoundActions(onInsufficientBalance: () => void) {
 
   const cashOut = (claimMilestone = false) => {
     const { wallet, game } = store.getState();
-    if (pending.current || (milestonePending.current && !claimMilestone) || game.status !== "active" || game.currentStep < 1) return;
+    if (pending.current || game.isEliminating || (milestonePending.current && !claimMilestone) || game.status !== "active" || game.currentStep < 1) return;
     settle({
       id: crypto.randomUUID(), bet: game.roundBet, steps: game.currentStep,
       multiplier: game.multiplier, payout: calculatePayout(game.roundBet, game.multiplier),

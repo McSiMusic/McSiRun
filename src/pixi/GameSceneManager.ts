@@ -175,8 +175,6 @@ export class GameSceneManager {
     if (this.crackTime > 0) {
       this.crackTime = Math.max(0, this.crackTime - deltaMs);
       this.crack.alpha = Math.min(1, this.crackTime / 500);
-      const shake = Math.min(4, this.crackTime / 200);
-      this.scene.position.set(Math.sin(this.elapsed * 0.09) * shake, Math.cos(this.elapsed * 0.11) * shake);
       if (this.crackTime === 0) {
         this.crack.visible = false;
         this.scene.position.set(0);

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import reducer, { startRound, safeStep, finishRound, hydrateGame } from "../src/store/gameSlice";
+import reducer, { startRound, beginElimination, completeElimination, safeStep, finishRound, hydrateGame } from "../src/store/gameSlice";
 import type { RoundRecord } from "../src/types/game";
 
 test("the finished track keeps its difficulty until Play starts another round", () => {
@@ -30,4 +30,21 @@ test("completed losses show Play Again but hydration never restores it", () => {
   state = reducer(undefined, hydrateGame(legacySession));
   assert.deepEqual(state.history, [record]);
   assert.equal(state.hasPlayedRound, false);
+});
+
+test("a fatal step locks restarting until the matching elimination completes", () => {
+  const record: RoundRecord = { id: "3", bet: 10, steps: 0, multiplier: 1, payout: 0, result: "hit", difficulty: "easy" };
+  let state = reducer(undefined, startRound({ bet: 10, difficulty: "easy" }));
+  state = reducer(state, beginElimination());
+  assert.equal(state.isEliminating, true);
+  state = reducer(state, finishRound({ status: "lost", record }));
+  const eventId = state.eventId;
+  state = reducer(state, startRound({ bet: 10, difficulty: "easy" }));
+  assert.equal(state.status, "lost");
+  state = reducer(state, completeElimination(eventId - 1));
+  assert.equal(state.isEliminating, true);
+  state = reducer(state, completeElimination(eventId));
+  assert.equal(state.isEliminating, false);
+  state = reducer(state, startRound({ bet: 10, difficulty: "easy" }));
+  assert.equal(state.status, "active");
 });

@@ -31,6 +31,7 @@ test("mute defaults on, persists locally, and is omitted from session state", ()
     const saved: { wallet: object; game: object } = JSON.parse(raw);
     assert.equal("isMuted" in saved.wallet, false);
     assert.equal("hasPlayedRound" in saved.game, false);
+    assert.equal("isEliminating" in saved.game, false);
     assert.equal("hasPlayedRound" in Object.fromEntries(local), false);
   } finally {
     if (previousWindow) Object.defineProperty(globalThis, "window", previousWindow);

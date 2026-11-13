@@ -58,7 +58,7 @@ export function Header({ onTopUp }: { onTopUp: () => void }) {
               {isMuted ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M17 9a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12" />}
             </svg>
           </button>
-          <SettingsMenu />
+          <SettingsMenu isMuted={isMuted} onToggleSound={toggleMute} />
         </div>
       </header>
       <HowToPlayModal

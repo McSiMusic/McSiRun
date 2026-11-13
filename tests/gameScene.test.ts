@@ -55,6 +55,8 @@ test("loss starts at the window, reveals after the animation, and cancels on res
   assert.ok(Math.abs(effects["sourceY"] * scene["world"].scale.y - source.y) < 0.001);
   for (let i = 0; i < 24; i += 1) scene["tick"](40);
   assert.deepEqual(revealed, []);
+  assert.equal(scene["scene"].x, 0);
+  assert.equal(scene["scene"].y, 0);
   scene["tick"](40);
   assert.deepEqual(revealed, [2]);
 

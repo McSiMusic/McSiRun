@@ -11,6 +11,7 @@ const initialState: GameState = {
   roundBet: 0,
   trackDifficulty: "medium",
   hasPlayedRound: false,
+  isEliminating: false,
   history: [],
   eventId: 0,
 };
@@ -24,16 +25,24 @@ const gameSlice = createSlice({
       state.currentStep = 0;
       state.multiplier = 1;
       state.roundBet = 0;
+      state.isEliminating = false;
       state.history = action.payload.history.slice(0, 15);
       state.eventId = 0;
     },
     startRound(state, action: PayloadAction<{ bet: number; difficulty: Difficulty }>) {
+      if (state.isEliminating) return;
       state.status = "active";
       state.currentStep = 0;
       state.multiplier = 1;
       state.roundBet = action.payload.bet;
       state.trackDifficulty = action.payload.difficulty;
       state.eventId += 1;
+    },
+    beginElimination(state) {
+      if (state.status === "active") state.isEliminating = true;
+    },
+    completeElimination(state, action: PayloadAction<number>) {
+      if (state.status === "lost" && state.eventId === action.payload) state.isEliminating = false;
     },
     safeStep(state, action: PayloadAction<{ step: number; multiplier: number }>) {
       if (state.status !== "active" || action.payload.step !== state.currentStep + 1 ||
@@ -47,9 +56,11 @@ const gameSlice = createSlice({
       state.eventId += 1;
       state.history = [action.payload.record, ...state.history].slice(0, 15);
       state.hasPlayedRound = true;
+      if (action.payload.status === "lost") state.isEliminating = true;
       state.roundBet = 0;
     },
     resetRound(state) {
+      if (state.isEliminating) return;
       state.status = "idle";
       state.currentStep = 0;
       state.multiplier = 1;
@@ -59,6 +70,6 @@ const gameSlice = createSlice({
   },
 });
 
-export const { hydrateGame, startRound, safeStep, finishRound, resetRound } =
+export const { hydrateGame, startRound, beginElimination, completeElimination, safeStep, finishRound, resetRound } =
   gameSlice.actions;
 export default gameSlice.reducer;

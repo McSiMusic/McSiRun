@@ -15,7 +15,10 @@ export async function loadSceneTextures(): Promise<SceneTextures> {
   const entries = await Promise.all(
     names.map(async (name) => {
       const extension = name === "screen-crack" ? "png" : "svg";
-      const texture = await Assets.load<Texture>(assetPath(`/sprites/${name}.${extension}`));
+      const src = assetPath(`/sprites/${name}.${extension}`);
+      const texture = await Assets.load<Texture>(
+        extension === "svg" ? { src, data: { resolution: 2 } } : src,
+      );
       return [name, texture] as const;
     }),
   );

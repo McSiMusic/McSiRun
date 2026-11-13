@@ -3,7 +3,7 @@ import { useAppSelector } from "@/src/store/hooks";
 const en = {
   home: "McSiRun home", howTo: "How to play?", balance: "Balance",
   topUp: "Top up demo wallet", mute: "Mute sound", unmute: "Unmute sound",
-  settings: "Settings", install: "Install App", language: "Language",
+  settings: "Settings", install: "Install App", language: "Language", sound: "Sound", soundOn: "On", soundOff: "Off",
   installHelp: "Use your browser's install option, or on iOS tap Share and then Add to Home Screen.",
   installed: "McSiRun is already installed.",
   betControls: "Betting controls", bet: "Bet amount", minimum: "Minimum bet", maximum: "Maximum bet", minShort: "MIN", maxShort: "MAX",
@@ -33,7 +33,7 @@ const en = {
 const ru: Record<keyof typeof en, string> = {
   home: "На главную McSiRun", howTo: "Как играть?", balance: "Баланс",
   topUp: "Пополнить демо-кошелёк", mute: "Выключить звук", unmute: "Включить звук",
-  settings: "Настройки", install: "Установить приложение", language: "Язык",
+  settings: "Настройки", install: "Установить приложение", language: "Язык", sound: "Звук", soundOn: "Вкл", soundOff: "Выкл",
   installHelp: "Выберите установку в меню браузера. На iOS нажмите «Поделиться», затем «На экран Домой».",
   installed: "McSiRun уже установлен.",
   betControls: "Управление ставкой", bet: "Сумма ставки", minimum: "Минимальная ставка", maximum: "Максимальная ставка", minShort: "МИН", maxShort: "МАКС",
