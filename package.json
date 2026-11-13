@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test tests/assetPath.test.ts tests/awpFx.test.ts tests/chickenActor.test.ts tests/crateTrack.test.ts tests/gameScene.test.ts tests/roundLifecycle.test.ts tests/soundEngine.test.ts tests/soundStorage.test.ts tests/storeProvider.test.ts"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.14.0",
@@ -24,6 +25,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsx": "^4.20.6"
   }
 }

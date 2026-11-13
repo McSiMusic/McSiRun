@@ -1,20 +1,12 @@
+import "./pixiTestAdapter";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import { createRequire } from "node:module";
-import ts from "typescript";
 import { Texture } from "pixi.js";
-
-const source = fs.readFileSync(new URL("../src/pixi/ChickenActor.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
-}).outputText;
-const exportsForTest = {};
-new Function("require", "exports", compiled)(createRequire(import.meta.url), exportsForTest);
-const { ChickenActor } = exportsForTest;
+import { ChickenActor } from "../src/pixi/ChickenActor";
+import type { SceneTextures } from "../src/pixi/textures/assets";
 
 test("chicken jumps from the street onto the first lid and then the next lid", () => {
-  const textures = { body: Texture.EMPTY, head: Texture.EMPTY, wing: Texture.EMPTY, leg: Texture.EMPTY };
+  const textures = new Proxy({} as SceneTextures, { get: () => Texture.EMPTY });
   const chicken = new ChickenActor(textures);
   chicken.reset(140);
   chicken.tick(0, 272, 140);

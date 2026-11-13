@@ -46,7 +46,7 @@ npm run dev
 npm run lint
 npx next typegen
 npx tsc --noEmit
-node --test
+npm test
 npm run build
 ```
 

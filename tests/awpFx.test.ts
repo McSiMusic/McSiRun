@@ -1,21 +1,13 @@
+import "./pixiTestAdapter";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import { createRequire } from "node:module";
-import ts from "typescript";
 import { Container, Texture } from "pixi.js";
-
-const source = fs.readFileSync(new URL("../src/pixi/AwpFxLayer.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
-}).outputText;
-const exportsForTest = {};
-new Function("require", "exports", compiled)(createRequire(import.meta.url), exportsForTest);
-const { AwpFxLayer } = exportsForTest;
+import { AwpFxLayer } from "../src/pixi/AwpFxLayer";
+import type { SceneTextures } from "../src/pixi/textures/assets";
 
 function createEffect() {
   const world = new Container();
-  const textures = { beam: Texture.EMPTY, tracer: Texture.EMPTY, "impact-ring": Texture.EMPTY, feather: Texture.EMPTY };
+  const textures = new Proxy({} as SceneTextures, { get: () => Texture.EMPTY });
   return { world, effect: new AwpFxLayer(world, textures) };
 }
 
