@@ -4,6 +4,7 @@ import "./globals.css";
 import { StoreProvider } from "@/src/store/StoreProvider";
 import { PwaRegistrar } from "@/src/components/layout/PwaRegistrar";
 import type { Viewport } from "next";
+import { assetPath } from "@/src/lib/assetPath";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,7 +14,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "McSiRun | Tactical Edition",
   description: "A tactical arcade game set in the streets of cs_italy.",
-  manifest: "/manifest.json",
+  manifest: assetPath("/manifest.json"),
   appleWebApp: { capable: true, title: "McSiRun" },
 };
 

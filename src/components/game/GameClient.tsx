@@ -12,6 +12,7 @@ import { useAppSelector } from "@/src/store/hooks";
 import { MAX_STEPS } from "@/src/lib/gameMath";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
+import { assetPath } from "@/src/lib/assetPath";
 
 export function GameClient() {
   const wallet = useAppSelector((state) => state.wallet);
@@ -69,7 +70,7 @@ export function GameClient() {
                     <strong>{t.won} +${game.history[0].payout.toFixed(2)} ({game.history[0].multiplier.toFixed(2)}x)</strong>
                     {game.history[0].prize && (
                       <div className="result-prize">
-                        <Image src={`/sprites/${game.history[0].steps === MAX_STEPS ? "awp-dragon-lore" : "milestone-pistol"}.svg`}
+                        <Image src={assetPath(`/sprites/${game.history[0].steps === MAX_STEPS ? "awp-dragon-lore" : "milestone-pistol"}.svg`)}
                           alt="" width={80} height={40} unoptimized loading="eager" />
                         <span>{game.history[0].prize === "Classified Pistol | Ember" ? t.pistol : game.history[0].prize}</span>
                       </div>

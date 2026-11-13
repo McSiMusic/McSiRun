@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { RoundRecord } from "@/src/types/game";
 import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { useI18n } from "@/src/lib/i18n";
+import { assetPath } from "@/src/lib/assetPath";
 
 interface Props {
   win: RoundRecord | null;
@@ -33,7 +34,7 @@ export function SkinWinModal({ win, milestone, onClaim, onKeepRunning }: Props) 
           <h2 id="win-title">{legendary ? t.legendaryUnlocked : classified ? t.milestoneUnlocked : t.niceRun}</h2>
           <p className="win-subtitle">{milestone ? t.milestoneChoice : t.rewardText}</p>
           <div className={`win-art ${classified ? "classified-art" : ""}`}>
-            <Image src={`/sprites/${art}.svg`} alt={reward} width={300} height={180} unoptimized loading="eager" />
+            <Image src={assetPath(`/sprites/${art}.svg`)} alt={reward} width={300} height={180} unoptimized loading="eager" />
           </div>
           <h3>{reward}</h3>
           <div className="win-payout"><strong>+${win.payout.toFixed(2)}</strong><span>{t.at} {win.multiplier.toFixed(2)}x</span></div>

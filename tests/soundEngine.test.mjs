@@ -37,7 +37,10 @@ test("AWP sample defaults to muted and plays at 0.09 with a two-second cutoff", 
     globalThis.window = { AudioContext: MockAudioContext };
     globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) });
     const exportsForTest = {};
-    new Function("require", "exports", compiled)(createRequire(import.meta.url), exportsForTest);
+    const require = createRequire(import.meta.url);
+    new Function("require", "exports", compiled)(
+      (id) => id === "@/src/lib/assetPath" ? { assetPath: (path) => path } : require(id), exportsForTest,
+    );
     const engine = exportsForTest.soundEngine;
     engine.playSound("awp_shot");
     assert.deepEqual(events, []);

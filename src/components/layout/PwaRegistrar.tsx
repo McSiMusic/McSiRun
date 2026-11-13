@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { assetPath } from "@/src/lib/assetPath";
 
 interface InstallEvent extends Event {
   prompt: () => Promise<void>;
@@ -32,7 +33,7 @@ export function PwaRegistrar({ children }: { children: React.ReactNode }) {
     window.addEventListener("beforeinstallprompt", capture);
     window.addEventListener("appinstalled", onInstalled);
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js").catch((error: unknown) =>
+      void navigator.serviceWorker.register(assetPath("/sw.js")).catch((error: unknown) =>
         console.error("Unable to register the McSiRun service worker.", error));
     }
     return () => {

@@ -1,3 +1,5 @@
+import { assetPath } from "@/src/lib/assetPath";
+
 export type SoundType =
   | "ui_click"
   | "bet_adjust"
@@ -14,7 +16,7 @@ class SoundEngine {
 
   preload() {
     if (this.sample || typeof window === "undefined") return;
-    this.sample = fetch("/sound/awp.ogg")
+    this.sample = fetch(assetPath("/sound/awp.ogg"))
       .then((response) => {
         if (!response.ok) throw new Error(`AWP sample returned ${response.status}`);
         return response.arrayBuffer();
@@ -151,3 +153,4 @@ class SoundEngine {
 }
 
 export const soundEngine = new SoundEngine();
+

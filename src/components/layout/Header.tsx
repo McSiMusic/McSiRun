@@ -9,6 +9,7 @@ import { soundEngine } from "@/src/lib/audio/soundEngine";
 import { HowToPlayModal } from "@/src/components/layout/HowToPlayModal";
 import { SettingsMenu } from "@/src/components/layout/SettingsMenu";
 import { useI18n } from "@/src/lib/i18n";
+import { assetPath } from "@/src/lib/assetPath";
 
 export function Header({ onTopUp }: { onTopUp: () => void }) {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -27,7 +28,7 @@ export function Header({ onTopUp }: { onTopUp: () => void }) {
     <>
       <header className="topbar">
         <Link className="brand" href="/" aria-label={t.home}>
-          <span className="brand-mark"><Image src="/icons/chicken.svg" width={40} height={40} alt="" unoptimized /></span>
+          <span className="brand-mark"><Image src={assetPath("/icons/chicken.svg")} width={40} height={40} alt="" unoptimized /></span>
           <span className="brand-name">McSi<em>Run</em></span>
         </Link>
         <div className="header-actions">

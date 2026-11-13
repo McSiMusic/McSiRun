@@ -1,4 +1,5 @@
 import { Assets, type Texture } from "pixi.js";
+import { assetPath } from "@/src/lib/assetPath";
 
 const names = [
   "body", "head", "wing", "leg", "feather", "crate",
@@ -14,7 +15,7 @@ export async function loadSceneTextures(): Promise<SceneTextures> {
   const entries = await Promise.all(
     names.map(async (name) => {
       const extension = name === "screen-crack" ? "png" : "svg";
-      const texture = await Assets.load<Texture>(`/sprites/${name}.${extension}`);
+      const texture = await Assets.load<Texture>(assetPath(`/sprites/${name}.${extension}`));
       return [name, texture] as const;
     }),
   );
